@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="description" content="AI 旅游规划助手 — 输入出发地和目的地，AI 自动生成详细行程攻略、路线地图与费用预算">
+  <meta name="theme-color" content="#0c1d3a">
+  <title>AI 旅游规划助手</title>
+
+  <!-- Favicon (Emoji) -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+
+  <!-- 高德地图 JS API v2.0 — Key 通过设置面板配置，动态加载 -->
+
+  <!-- 样式 -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <div class="app-container">
+    <!-- 输入视图（首页） -->
+    <div id="view-input" class="view"></div>
+
+    <!-- 加载视图 -->
+    <div id="view-loading" class="view"></div>
+
+    <!-- 错误视图 -->
+    <div id="view-error" class="view"></div>
+
+    <!-- 总览视图 -->
+    <div id="view-overview" class="view"></div>
+
+    <!-- 详情视图 -->
+    <div id="view-detail" class="view"></div>
+  </div>
+
+  <!-- 浮动返回按钮 -->
+  <button id="fab-back" class="fab-back hidden" title="返回总览">
+    ↑
+  </button>
+
+  <!-- 设置弹窗容器 -->
+  <div id="settings-container"></div>
+
+  <!-- PDF 导出 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+
+  <!-- 数据 & 逻辑 -->
+  <script src="js/data.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/pdf.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>

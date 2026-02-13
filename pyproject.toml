@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trip-skill-assistant"
+version = "0.1.0"
+description = "Road trip planning assistant prototype"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.6.0",
+]
+
+[project.scripts]
+trip-planner = "trip_skill.cli:run"
+trip-ticket-mcp = "trip_skill.mcp_server:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.daily_poster]
+script = "tools/render_daily_itinerary_posters.py"
+out_dir = "output/daily_posters"
+requires_env = ["AMAP_WEB_API_KEY"]
+data_refresh_date = "2026-02-12"
+family_profile = "2 adults + 1 child (4y)"
+days_builder = "tools/render_daily_itinerary_posters.py::_build_days"
+spot_enrich_source = "tools/render_daily_itinerary_posters.py::SPOT_ENRICH"
+food_cards_source = "tools/render_daily_itinerary_posters.py::DAY_FOOD_CARDS"
+
+[tool.daily_poster.cost]
+fuel_cost_per_km = 0.75
+meal_cost_per_meal = 150
+default_hotel_cost = 350
+parking_fee_range = [20, 50]
+
+[tool.daily_poster.map]
+tile_provider = "AMap raster tile style=7 (Leaflet)"
+fit_bounds_padding = 0.10
+route_colors = ["#e11d48", "#2563eb", "#16a34a", "#f59e0b", "#7c3aed", "#0ea5e9"]
+map_height_px = 670
+rotation_control = false
+route_stats_position = "below_map_legend"
+
+[tool.daily_poster.typography]
+min_font_px = 24
+body_list_px = 30
+table_px = 28
+spot_content_px = 28
+
+[tool.daily_poster.copywriting]
+spot_intro_target_chars = 150
+spot_guide_target_chars = 150
+spot_pitfall_target_chars = 100
+food_detour_limit_km = 10
+food_budget_per_meal = 150
+show_data_source_footnote = true
+
+[tool.daily_poster.workflow]
+steps = [
+    "1) Build day payloads (_build_days) with fixed dates and hard constraints",
+    "2) Enrich attractions with open hours, best time, pitfalls, and reviews",
+    "3) Enrich meal cards with nearby local restaurants and detour control",
+    "4) Geocode all POIs via AMap and query driving polyline per segment",
+    "5) Compute daily cost summary (fuel/toll/meal/hotel/ticket/parking)",
+    "6) Render day HTML with map, timeline, spots, meal cards, and budget",
+    "7) Capture full-page PNG posters via Playwright",
+]
+
+[tool.daily_poster.commands]
+verify_compile = "python -m py_compile tools/render_daily_itinerary_posters.py"
+generate_html_only = "AMAP_WEB_API_KEY=<your_key> python tools/render_daily_itinerary_posters.py --html-only --out-dir output/daily_posters"
+generate_html_png = "AMAP_WEB_API_KEY=<your_key> python tools/render_daily_itinerary_posters.py --out-dir output/daily_posters"

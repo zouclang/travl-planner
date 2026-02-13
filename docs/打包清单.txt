@@ -1,0 +1,10 @@
+已打包文件（脱敏）：
+- pyproject.toml
+- env/.env.trip_planner.example
+- env/.env.weather.example
+- env/.env.wechat_oa.example
+- templates/request.template.json
+- templates/user_profile.template.json
+- templates/codex.mcp.config.toml.template
+- docs/配置使用手册_详细版.md
+- docs/打包清单.txt

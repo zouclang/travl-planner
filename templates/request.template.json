@@ -1,0 +1,18 @@
+{
+  "start_location": "你的出发城市或地标",
+  "start_date": "2026-03-14",
+  "days": 2,
+  "round_trip": false,
+  "adults": 2,
+  "children": 0,
+  "max_drive_hours_per_day": 5,
+  "preferences": ["自然", "摄影", "美食"],
+  "strategy": ["fastest", "avoid_congestion"],
+  "vehicle_type": "fuel",
+  "fuel_consumption_l_per_100km": 8.0,
+  "budget_level": "comfortable",
+  "weather_city": "你的目的地城市",
+  "must_visit": ["景点A", "景点B"],
+  "avoid": ["不想去的类型或地点"],
+  "theme_query": "你想要的旅行风格关键词"
+}

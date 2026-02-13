@@ -1,0 +1,32 @@
+{
+  "home_address": "请填写你自己的出发地址（可为空）",
+  "vehicle": {
+    "model": "你的车型（可为空）",
+    "type": "fuel",
+    "fuel_consumption_l_per_100km": 8.0,
+    "fuel_cost_cny_per_km": 0.75
+  },
+  "planning_rules": {
+    "must_include_estimated_cost": true,
+    "display_rules": {
+      "time_format": {
+        "under_one_hour_unit": "minute",
+        "over_or_equal_one_hour_format": "X小时Y分钟"
+      },
+      "money_format": {
+        "currency": "CNY",
+        "unit": "元",
+        "rounding": "half_up"
+      }
+    },
+    "highway_toll_policy": {
+      "requires_online_check": true,
+      "free_on_national_holidays": true,
+      "note": "按当地实时政策为准"
+    },
+    "default_costs_cny": {
+      "hotel_per_night": 350,
+      "meal_per_meal": 150
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# 将以下内容合并到 ~/.codex/config.toml
+# 把 PROJECT_ROOT 替换成你本地项目绝对路径
+
+[mcp_servers.trip_ticket_price]
+command = "bash"
+args = ["-lc", "cd PROJECT_ROOT && PYTHONPATH=src python3 -m trip_skill.mcp_server"]
