@@ -1,8 +1,8 @@
 # Cloudflare Pages 项目配置
 name = "trip-planner"
 compatibility_date = "2024-01-01"
+pages_build_output_dir = "."
 
-# Pages 不需要额外配置，functions/ 目录会自动识别
 # 环境变量通过 Cloudflare Dashboard 或 wrangler secret 设置：
 #   LLM_API_URL  — OpenAI 兼容 API 端点
 #   LLM_API_KEY  — API 密钥
