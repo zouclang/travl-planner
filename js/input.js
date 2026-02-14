@@ -254,8 +254,8 @@ const TripInput = (() => {
             <p class="modal__hint">配置 AI 大模型 API。支持任何 OpenAI 兼容接口（DeepSeek / Gemini / Qwen 等）。</p>
 
             <label class="form-label">
-              <input type="checkbox" id="set-direct" ${s.directMode ? 'checked' : ''}>
-              直连模式（浏览器直接调用 API，无需后端）
+              <input type="checkbox" id="set-direct" ${s.directMode !== false ? 'checked' : ''}>
+              直连模式（浏览器直接调用 API，默认开启）
             </label>
 
             <div class="form-group" style="margin-top:12px;">

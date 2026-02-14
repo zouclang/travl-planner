@@ -12,17 +12,20 @@ const TripMap = (() => {
     /* ---------- 内部状态 ---------- */
     let _overviewMap = null;
     let _dayMap = null;
-    const DAY_COLORS = TRIP_DATA.routeColors;
 
     /* ---------- 公共方法 ---------- */
 
     /**
-     * 渲染总览地图
+     * 渲染总览地图 (海报风格)
      * @param {string} containerId  DOM 容器 id
+     * @param {Object} tripData     当前行程数据
      */
-    function renderOverview(containerId) {
+    function renderOverview(containerId, tripData) {
         const el = document.getElementById(containerId);
-        if (!el) return;
+        if (!el || !tripData) return;
+
+        // Poster Style Colors: Vibrant Rainbow Road
+        const DAY_COLORS = (tripData.routeColors || ['#e11d48', '#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#0ea5e9', '#ec4899']);
 
         if (!window.AMap) {
             _showPlaceholder(el, '配置高德地图 JS API Key 后即可显示路线地图');
@@ -33,44 +36,63 @@ const TripMap = (() => {
             zoom: 6,
             center: [115.0, 38.0],
             mapStyle: 'amap://styles/whitesmoke',
-            features: ['bg', 'road', 'building', 'point']
+            features: ['bg', 'road', 'point'] // Hide default buildings to reduce noise
         });
 
-        // 绘制各天路线
+        // 1. 添加顶部悬浮标题
+        _addHeaderOverlay(el, tripData);
+
+        // 2. 绘制 "彩虹路"
         const allPoints = [];
-        TRIP_DATA.days.forEach((day, i) => {
+        tripData.days.forEach((day, i) => {
             const points = _collectDayCoords(day);
+            if (points.length < 1) return;
             allPoints.push(...points);
 
-            // 路线折线
+            // 路线折线 (Bold & Vibrant)
             if (points.length >= 2) {
                 new AMap.Polyline({
                     path: points,
                     strokeColor: DAY_COLORS[i % DAY_COLORS.length],
-                    strokeWeight: 4,
-                    strokeOpacity: 0.85,
+                    strokeWeight: 8, // Thicker line
+                    strokeOpacity: 0.9,
                     lineJoin: 'round',
                     lineCap: 'round',
+                    zIndex: 10,
                     map: _overviewMap
+                });
+
+                // 3. 路程时长胶囊 (Duration Pill)
+                // 显示在每一天路线的中间位置
+                if (day.driving && day.driving.duration) {
+                    const midPt = points[Math.floor(points.length / 2)];
+                    _addDurationMarker(_overviewMap, midPt, day.driving.duration);
+                }
+            }
+
+            // 4. 城市卡片标记 (City Card)
+            // 起点 (D1 only)
+            if (i === 0 && day.route && day.route.start) {
+                _addCityMarker(_overviewMap, day.route.start.coords, {
+                    day: '起点',
+                    name: day.route.start.name,
+                    sub: '出发'
                 });
             }
 
-            // 起点标记
-            const startPt = points[0];
-            if (startPt) {
-                _addMarker(_overviewMap, startPt, `D${day.day}`, DAY_COLORS[i % DAY_COLORS.length]);
+            // 每一天的终点 (City Card)
+            if (day.route && day.route.end) {
+                _addCityMarker(_overviewMap, day.route.end.coords, {
+                    day: `D${day.day}`,
+                    name: day.hotel && day.hotel.name && day.hotel.name !== '未定' ? day.hotel.name : (day.route.end.name || '住宿点'),
+                    sub: day.hotel && day.hotel.landmark ? `近${day.hotel.landmark}` : ''
+                });
             }
         });
 
-        // 终点标记（最后一天终点）
-        const lastDay = TRIP_DATA.days[TRIP_DATA.days.length - 1];
-        if (lastDay && lastDay.route && lastDay.route.end) {
-            _addMarker(_overviewMap, lastDay.route.end.coords, '终', '#6b7280');
-        }
-
         // 自适应视野
         if (allPoints.length > 0) {
-            _overviewMap.setFitView(null, false, [60, 60, 60, 60]);
+            _overviewMap.setFitView(null, false, [100, 60, 60, 60]); // More padding top for header
         }
     }
 
@@ -78,12 +100,15 @@ const TripMap = (() => {
      * 渲染每日地图
      * @param {string} containerId  DOM 容器 id
      * @param {number} dayIndex     天索引（0-based）
+     * @param {Object} tripData     当前行程数据
      */
-    function renderDay(containerId, dayIndex) {
+    function renderDay(containerId, dayIndex, tripData) {
         const el = document.getElementById(containerId);
-        if (!el) return;
+        if (!el || !tripData) return;
 
-        const day = TRIP_DATA.days[dayIndex];
+        const DAY_COLORS = (tripData.routeColors || ['#e11d48', '#2563eb', '#16a34a', '#f59e0b', '#7c3aed', '#0ea5e9', '#ec4899']);
+
+        const day = tripData.days[dayIndex];
         if (!day) return;
 
         if (!window.AMap) {
@@ -105,30 +130,44 @@ const TripMap = (() => {
             new AMap.Polyline({
                 path: points,
                 strokeColor: color,
-                strokeWeight: 5,
+                strokeWeight: 8,
                 strokeOpacity: 0.9,
                 lineJoin: 'round',
                 lineCap: 'round',
                 showDir: true,
+                zIndex: 10,
                 map: _dayMap
+            });
+
+            // 添加时长胶囊
+            if (day.driving && day.driving.duration) {
+                const midPt = points[Math.floor(points.length / 2)];
+                _addDurationMarker(_dayMap, midPt, day.driving.duration);
+            }
+        }
+
+        // 起点
+        if (day.route && day.route.start) {
+            _addCityMarker(_dayMap, day.route.start.coords, {
+                day: '始',
+                name: day.route.start.name
             });
         }
 
-        // 标记起点
-        if (day.route && day.route.start) {
-            _addMarker(_dayMap, day.route.start.coords, '始', color, day.route.start.name);
-        }
-
-        // 标记途经点
+        // 途经点 (Regular Marker)
         if (day.route && day.route.waypoints) {
             day.route.waypoints.forEach((wp, idx) => {
                 _addMarker(_dayMap, wp.coords, String(idx + 1), color, wp.name);
             });
         }
 
-        // 标记终点
+        // 终点
         if (day.route && day.route.end) {
-            _addMarker(_dayMap, day.route.end.coords, '终', '#6b7280', day.route.end.name);
+            _addCityMarker(_dayMap, day.route.end.coords, {
+                day: '终',
+                name: day.route.end.name || '住宿点',
+                sub: day.hotel && day.hotel.landmark ? `近${day.hotel.landmark}` : ''
+            });
         }
 
         // 自适应视野
@@ -155,9 +194,66 @@ const TripMap = (() => {
         return pts;
     }
 
+    // New: Custom "City Card" Marker
+    function _addCityMarker(map, coords, { day, name, sub }) {
+        if (!coords) return;
+        const content = `
+            <div class="map-marker-city">
+                <div class="map-marker-city__day">${day}</div>
+                <div class="map-marker-city__name">${name}</div>
+                ${sub ? `<div class="map-marker-city__sub">${sub}</div>` : ''}
+            </div>
+        `;
+        return new AMap.Marker({
+            position: coords,
+            content: content,
+            offset: new AMap.Pixel(0, 0), // Base styling handles transform
+            zIndex: 100, // Top of lines
+            map: map
+        });
+    }
+
+    // New: "Duration Pill" Marker
+    function _addDurationMarker(map, coords, durationText) {
+        if (!coords) return;
+        const content = `<div class="map-marker-duration">🚗 ${durationText}</div>`;
+        return new AMap.Marker({
+            position: coords,
+            content: content,
+            offset: new AMap.Pixel(0, 0),
+            zIndex: 90,
+            map: map
+        });
+    }
+
+    // New: Header Overlay
+    function _addHeaderOverlay(parentElement, tripData) {
+        // Remove existing if any
+        const existing = parentElement.querySelector('.map-header-overlay');
+        if (existing) existing.remove();
+
+        const m = tripData.meta || {};
+        const stats = m.stats || {};
+
+        // Find departure and destination manually if route string is complex
+        // Or just use the title/route logic
+        let titleText = m.title || '行程规划';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'map-header-overlay';
+        overlay.innerHTML = `
+            <div class="map-header-overlay__title">${titleText}</div>
+            <div class="map-header-overlay__badge">
+                ${m.totalDays || tripData.days.length}天 · ${stats.totalDistance || '?'}km
+            </div>
+        `;
+        parentElement.appendChild(overlay);
+    }
+
+    // Classic Marker Helper (kept for waypoints)
     function _addMarker(map, coords, label, color, title) {
         const content = `<div style="
-      width:26px;height:26px;border-radius:50%;
+      width:24px;height:24px;border-radius:50%;
       background:${color};color:#fff;
       display:flex;align-items:center;justify-content:center;
       font-size:12px;font-weight:700;
@@ -168,15 +264,15 @@ const TripMap = (() => {
         const marker = new AMap.Marker({
             position: coords,
             content: content,
-            offset: new AMap.Pixel(-13, -13),
+            offset: new AMap.Pixel(-12, -12),
             map: map,
             title: title || ''
         });
 
         if (title) {
             marker.setLabel({
-                content: `<span style="font-size:12px;color:#333;background:#fff;padding:2px 6px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.15);white-space:nowrap;">${title}</span>`,
-                offset: new AMap.Pixel(0, -36),
+                content: `<span style="font-size:11px;color:#333;background:#fff;padding:2px 6px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.15);white-space:nowrap;">${title}</span>`,
+                offset: new AMap.Pixel(0, -32),
                 direction: 'top'
             });
         }

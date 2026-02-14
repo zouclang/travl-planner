@@ -22,8 +22,13 @@ const TripAPI = (() => {
     async function generate(params) {
         const settings = getSettings();
 
-        // ---- 本地开发直连模式 ----
-        if (settings.directMode && settings.apiUrl && settings.apiKey) {
+        // ---- 直连模式（默认开启） ----
+        // directMode 默认 true；仅当显式关闭且后端可用时走代理
+        const useDirect = settings.directMode !== false;
+        if (useDirect) {
+            if (!settings.apiUrl || !settings.apiKey) {
+                throw new Error('请先点击右下角 ⚙️ 配置 API Key 和 API Endpoint');
+            }
             return _callLLMDirect(params, settings);
         }
 

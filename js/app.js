@@ -49,22 +49,32 @@ const App = (() => {
     }
   }
 
-  /** 动态加载高德地图 SDK（从设置读取 Key） */
+  /** 动态加载高德地图 SDK（返回 Promise） */
+  let _amapPromise = null;
   function _loadAmapSDK() {
-    if (window.AMap) return; // already loaded
+    if (window.AMap) return Promise.resolve();
+    if (_amapPromise) return _amapPromise;
+
     const settings = TripAPI.getSettings();
-    if (!settings.amapKey) return; // no key configured
+    if (!settings.amapKey) return Promise.reject('未配置高德 Key');
 
-    // Set security config
-    if (settings.amapSecret) {
-      window._AMapSecurityConfig = { securityJsCode: settings.amapSecret };
-    }
+    _amapPromise = new Promise((resolve, reject) => {
+      // Set security config
+      if (settings.amapSecret) {
+        window._AMapSecurityConfig = { securityJsCode: settings.amapSecret };
+      }
 
-    // Inject script
-    const script = document.createElement('script');
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${settings.amapKey}`;
-    script.async = true;
-    document.head.appendChild(script);
+      const script = document.createElement('script');
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=${settings.amapKey}`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => {
+        _amapPromise = null;
+        reject('高德地图 SDK 加载失败');
+      };
+      document.head.appendChild(script);
+    });
+    return _amapPromise;
   }
 
   function _showView(name, param) {
@@ -99,7 +109,11 @@ const App = (() => {
       if (fab) fab.classList.add('hidden');
       window.scrollTo(0, 0);
 
-      requestAnimationFrame(() => TripMap.renderOverview('map-overview'));
+      _loadAmapSDK().then(() => {
+        TripMap.renderOverview('map-overview', data);
+      }).catch(() => {
+        TripMap.renderOverview('map-overview', data);
+      });
 
       el.querySelectorAll('[data-day]').forEach(card => {
         card.addEventListener('click', () => {
@@ -129,7 +143,11 @@ const App = (() => {
       if (fab) fab.classList.remove('hidden');
       window.scrollTo(0, 0);
 
-      requestAnimationFrame(() => TripMap.renderDay('map-day', param));
+      _loadAmapSDK().then(() => {
+        TripMap.renderDay('map-day', param, data);
+      }).catch(() => {
+        TripMap.renderDay('map-day', param, data);
+      });
 
       el.querySelectorAll('.day-header__back').forEach(btn => {
         btn.addEventListener('click', () => { location.hash = '#overview'; });
